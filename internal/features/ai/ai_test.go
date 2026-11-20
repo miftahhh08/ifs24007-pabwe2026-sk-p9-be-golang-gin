@@ -178,6 +178,7 @@ func TestHandler(t *testing.T) {
 	assert.Equal(t, 400, run(&fakeLLM{}, `{"topic":""}`).Code)
 	assert.Equal(t, 422, run(&fakeLLM{}, `{"topic":"Topik uji","category":"Zzz"}`).Code)
 	w := run(&fakeLLM{err: errors.New("down")}, `{"topic":"Topik uji"}`)
-	assert.Equal(t, 502, w.Code)
-	assert.True(t, strings.Contains(w.Body.String(), "AI service failed"))
+	assert.Equal(t, 200, w.Code)
+	assert.True(t, strings.Contains(w.Body.String(), "ai_warning"))
+	assert.True(t, strings.Contains(w.Body.String(), "Topik uji"))
 }

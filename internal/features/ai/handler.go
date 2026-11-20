@@ -28,7 +28,8 @@ func (h *Handler) Generate(c *gin.Context) {
 	case errors.Is(err, post.ErrInvalidCategory):
 		response.Fail(c, http.StatusUnprocessableEntity, "Invalid category")
 	case err != nil:
-		response.Fail(c, http.StatusBadGateway, "AI service failed: "+err.Error())
+		// Layanan AI gagal: tetap beri draf templat lokal agar alur penulis tidak terhenti.
+		response.Success(c, http.StatusOK, "Article generated (offline draft)", h.svc.Fallback(req))
 	default:
 		response.Success(c, http.StatusOK, "Article generated", res)
 	}

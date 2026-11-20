@@ -83,7 +83,10 @@ func Seed(db *gorm.DB, cfg *config.Config) error {
 		return err
 	}
 	if n > 0 {
-		return nil
+		// Akun dengan username admin yang sudah ada dipastikan berperan admin.
+		return db.Model(&auth.User{}).
+			Where("username = ? AND role <> ?", cfg.AdminUsername, auth.RoleAdmin).
+			Update("role", auth.RoleAdmin).Error
 	}
 	hash, err := auth.HashPassword(cfg.AdminPassword)
 	if err != nil {

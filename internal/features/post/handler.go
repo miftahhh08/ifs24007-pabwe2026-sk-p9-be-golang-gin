@@ -20,7 +20,7 @@ func NewHandler(svc *Service) *Handler { return &Handler{svc: svc} }
 func parseID(c *gin.Context) (uint, bool) {
 	n, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil || n == 0 {
-		response.Fail(c, http.StatusNotFound, ErrNotFound.Error())
+		response.Fail(c, http.StatusBadRequest, "Invalid ID")
 		return 0, false
 	}
 	return uint(n), true
@@ -33,6 +33,8 @@ func fail(c *gin.Context, err error, msg string) {
 	switch {
 	case errors.Is(err, ErrNotFound), errors.Is(err, ErrUserNotFound):
 		response.Fail(c, http.StatusNotFound, err.Error())
+	case errors.Is(err, ErrForbidden):
+		response.Fail(c, http.StatusForbidden, err.Error())
 	case errors.Is(err, ErrInvalidCategory):
 		response.Fail(c, http.StatusUnprocessableEntity, "Invalid category, allowed: Teknologi, Pendidikan, Gaya Hidup, Bisnis, Opini, Umum")
 	default:
@@ -114,6 +116,11 @@ func (h *Handler) Create(c *gin.Context) {
 func (h *Handler) Update(c *gin.Context) {
 	id, ok := parseID(c)
 	if !ok {
+		return
+	}
+	// Cek keberadaan (404) dan kepemilikan (403) sebelum validasi body (400).
+	if _, err := h.svc.Get(uid(c), id); err != nil {
+		fail(c, err, "Failed to update post")
 		return
 	}
 	var req PostRequest

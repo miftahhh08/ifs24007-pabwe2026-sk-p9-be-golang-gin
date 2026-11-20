@@ -14,6 +14,7 @@ var (
 	ErrNotFound        = errors.New("post not found")
 	ErrInvalidCategory = errors.New("invalid category")
 	ErrUserNotFound    = errors.New("user not found")
+	ErrForbidden       = errors.New("forbidden: you do not own this post")
 )
 
 // Categories adalah daftar kategori artikel yang valid.
@@ -117,28 +118,47 @@ func (s *Service) uniqueSlug(title string, excludeID uint) (string, error) {
 func (s *Service) ListCategories() []string { return Categories }
 
 // PublicList mengambil artikel terbit dengan filter kata kunci & kategori.
-func (s *Service) PublicList(f PostFilter) ([]Post, error) {
+func (s *Service) PublicList(f PostFilter) ([]PublicPost, error) {
 	f.Query = strings.TrimSpace(f.Query)
 	f.Category = strings.TrimSpace(f.Category)
 	if strings.EqualFold(f.Category, "semua") || strings.EqualFold(f.Category, "all") {
 		f.Category = ""
 	}
-	return s.repo.ListPublic(f)
+	posts, err := s.repo.ListPublic(f)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]PublicPost, 0, len(posts))
+	for i := range posts {
+		out = append(out, ToPublic(&posts[i]))
+	}
+	return out, nil
 }
 
 // PublicDetail mengambil artikel terbit berdasarkan slug.
-func (s *Service) PublicDetail(slug string) (*Post, error) {
+func (s *Service) PublicDetail(slug string) (*PublicPost, error) {
 	p, err := s.repo.FindPublicBySlug(slug)
-	return p, mapNotFound(err)
+	if err != nil {
+		return nil, mapNotFound(err)
+	}
+	pub := ToPublic(p)
+	return &pub, nil
 }
 
 // ListMine mengambil seluruh artikel milik penulis (terbit & draf).
 func (s *Service) ListMine(userID uint) ([]Post, error) { return s.repo.ListByUser(userID) }
 
 // Get mengambil satu artikel milik penulis.
+// Artikel tidak ada -> ErrNotFound (404); milik orang lain -> ErrForbidden (403).
 func (s *Service) Get(userID, id uint) (*Post, error) {
-	p, err := s.repo.FindByIDAndUser(id, userID)
-	return p, mapNotFound(err)
+	p, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, mapNotFound(err)
+	}
+	if p.UserID != userID {
+		return nil, ErrForbidden
+	}
+	return p, nil
 }
 
 // Create membuat artikel baru dengan slug unik.
@@ -246,13 +266,7 @@ func (s *Service) AdminUsers() ([]AdminUser, error) { return s.repo.AdminUsers()
 func (s *Service) AdminPosts() ([]Post, error) { return s.repo.ListAll() }
 
 // AdminUserPosts memberi seluruh artikel milik satu pengguna.
+// Pengguna yang tidak ada menghasilkan daftar kosong (bukan error).
 func (s *Service) AdminUserPosts(userID uint) ([]Post, error) {
-	ok, err := s.repo.UserExists(userID)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, ErrUserNotFound
-	}
 	return s.repo.ListByUser(userID)
 }

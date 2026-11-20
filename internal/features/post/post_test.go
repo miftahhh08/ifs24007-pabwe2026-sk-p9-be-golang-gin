@@ -153,9 +153,9 @@ func TestAuthorCRUDFlow(t *testing.T) {
 	w, _ = e.call("GET", "/posts/"+itoa(id), e.author, nil)
 	assert.Equal(t, 200, w.Code)
 	w, _ = e.call("GET", "/posts/"+itoa(id), e.other, nil) // bukan pemilik
-	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, 403, w.Code)
 	w, _ = e.call("GET", "/posts/abc", e.author, nil)
-	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, 400, w.Code)
 
 	// update: judul berubah -> slug berubah; excerpt kosong -> otomatis
 	w, out = e.call("PUT", "/posts/"+itoa(id), e.author, gin.H{"title": "Judul Baru", "content": "Konten baru", "category": "Bisnis", "is_published": true})
@@ -172,9 +172,11 @@ func TestAuthorCRUDFlow(t *testing.T) {
 	w, _ = e.call("PUT", "/posts/"+itoa(id), e.author, gin.H{"title": "x", "content": "y", "category": "Zzz"})
 	assert.Equal(t, 422, w.Code)
 	w, _ = e.call("PUT", "/posts/"+itoa(id), e.other, gin.H{"title": "x", "content": "y"})
+	assert.Equal(t, 403, w.Code)
+	w, _ = e.call("PUT", "/posts/99999999", e.author, gin.H{"title": "x"})
 	assert.Equal(t, 404, w.Code)
 	w, _ = e.call("PUT", "/posts/0", e.author, gin.H{"title": "x", "content": "y"})
-	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, 400, w.Code)
 
 	// toggle: terbit -> draf -> terbit
 	_, out = e.call("PATCH", "/posts/"+itoa(id)+"/toggle-publish", e.author, nil)
@@ -186,15 +188,15 @@ func TestAuthorCRUDFlow(t *testing.T) {
 	w, _ = e.call("PATCH", "/posts/999/toggle-publish", e.author, nil)
 	assert.Equal(t, 404, w.Code)
 	w, _ = e.call("PATCH", "/posts/x/toggle-publish", e.author, nil)
-	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, 400, w.Code)
 
 	// delete
 	w, _ = e.call("DELETE", "/posts/"+itoa(id), e.other, nil)
-	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, 403, w.Code)
 	w, _ = e.call("DELETE", "/posts/"+itoa(id), e.author, nil)
 	assert.Equal(t, 200, w.Code)
 	w, _ = e.call("DELETE", "/posts/x", e.author, nil)
-	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, 400, w.Code)
 	w, _ = e.call("GET", "/posts/"+itoa(id), e.author, nil)
 	assert.Equal(t, 404, w.Code)
 }
@@ -222,6 +224,9 @@ func TestPublicEndpoints(t *testing.T) {
 	w, out := e.call("GET", "/public/posts/go-untuk-pemula", "", nil)
 	assert.Equal(t, 200, w.Code)
 	assert.Equal(t, "penulis", data(out)["author"].(map[string]interface{})["username"])
+	assert.NotContains(t, w.Body.String(), "user_id")
+	w, _ = e.call("GET", "/public/posts", "", nil)
+	assert.NotContains(t, w.Body.String(), "user_id")
 	w, _ = e.call("GET", "/public/posts/draf-rahasia", "", nil)
 	assert.Equal(t, 404, w.Code)
 }
@@ -248,9 +253,9 @@ func TestAdminEndpoints(t *testing.T) {
 	_, out = e.call("GET", "/admin/users/"+itoa(int(e.authID))+"/posts", e.admin, nil)
 	assert.Len(t, out["data"], 2)
 	w, _ = e.call("GET", "/admin/users/9999/posts", e.admin, nil)
-	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, 200, w.Code) // pengguna tak ada -> daftar kosong
 	w, _ = e.call("GET", "/admin/users/x/posts", e.admin, nil)
-	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, 400, w.Code)
 }
 
 func TestAutoExcerptTruncates(t *testing.T) {

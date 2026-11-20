@@ -22,6 +22,7 @@ type GenerateResponse struct {
 	Content       string   `json:"content"`
 	Sources       []Source `json:"sources"`
 	SearchWarning string   `json:"search_warning,omitempty"`
+	AIWarning     string   `json:"ai_warning,omitempty"`
 }
 
 // draft adalah bentuk JSON yang diminta dari model AI.
