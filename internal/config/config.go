@@ -22,6 +22,7 @@ type Config struct {
 	DBUsername   string
 	DBPassword   string
 	DBSSLMode    string
+	SQLitePath   string
 
 	SearchEngineEndpoint string
 	OpenAIEndpoint       string
@@ -34,7 +35,7 @@ func Load() *Config {
 	_ = godotenv.Load()
 	return &Config{
 		AppEnv:        get("APP_ENV", "development"),
-		AppPort:       get("APP_PORT", "8081"),
+		AppPort:       get("APP_PORT", get("PORT", "8081")),
 		AppKey:        get("APP_KEY", "delcom_blog_secret_key_super_secure_2026_random_string_32chars"),
 		AdminUsername: get("ADMIN_USERNAME", "admin"),
 		AdminPassword: get("ADMIN_PASSWORD", "admin"),
@@ -46,6 +47,7 @@ func Load() *Config {
 		DBUsername:   get("DB_USERNAME", "postgres"),
 		DBPassword:   get("DB_PASSWORD", "postgres"),
 		DBSSLMode:    get("DB_SSLMODE", "disable"),
+		SQLitePath:   get("SQLITE_PATH", "app.db"),
 
 		SearchEngineEndpoint: get("SEARCH_ENGINE_ENDPOINT", "https://delcom.org/api/v1/search"),
 		OpenAIEndpoint:       get("OPENAI_ENDPOINT", "https://delcom.org/api/v1"),

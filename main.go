@@ -18,7 +18,7 @@ import (
 func main() {
 	cfg := config.Load()
 
-	db, err := database.Connect(cfg)
+	db, err := database.ConnectWithFallback(cfg)
 	if err != nil {
 		log.Fatalf("gagal koneksi database: %v", err)
 	}

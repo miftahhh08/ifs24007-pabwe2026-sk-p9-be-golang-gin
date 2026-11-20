@@ -1,6 +1,9 @@
 package database
 
 import (
+	"log"
+	"strings"
+
 	"github.com/glebarez/sqlite"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,6 +22,39 @@ var openDialector = func(cfg *config.Config) gorm.Dialector {
 // Connect membuka koneksi PostgreSQL untuk runtime.
 func Connect(cfg *config.Config) (*gorm.DB, error) {
 	return gorm.Open(openDialector(cfg), &gorm.Config{Logger: logger.Default.LogMode(logger.Warn)})
+}
+
+// ConnectWithFallback membuka PostgreSQL; bila gagal (atau DB_CONNECTION=sqlite)
+// aplikasi tetap hidup dengan SQLite berkas lokal agar server tidak berhenti.
+func ConnectWithFallback(cfg *config.Config) (*gorm.DB, error) {
+	if !strings.EqualFold(cfg.DBConnection, "sqlite") {
+		db, err := Connect(cfg)
+		if err == nil {
+			return db, nil
+		}
+		log.Printf("PostgreSQL tidak tersedia (%v), beralih ke SQLite", err)
+	}
+	return openSQLite(cfg.SQLitePath)
+}
+
+// openSQLite mencoba berkas yang diminta, lalu memori sebagai pilihan terakhir.
+func openSQLite(path string) (*gorm.DB, error) {
+	if path == "" {
+		path = "app.db"
+	}
+	var lastErr error
+	for _, dsn := range []string{path, "file::memory:"} {
+		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Warn)})
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if sqlDB, e := db.DB(); e == nil {
+			sqlDB.SetMaxOpenConns(1)
+		}
+		return db, nil
+	}
+	return nil, lastErr
 }
 
 // sqliteDSN dipisah sebagai variabel agar kegagalan pembukaan dapat diuji.

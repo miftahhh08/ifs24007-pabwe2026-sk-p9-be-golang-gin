@@ -56,7 +56,7 @@ func NewWithDeps(cfg *config.Config, db *gorm.DB, searcher ai.Searcher, llm ai.C
 
 	// Auth
 	a := api.Group("/auth")
-	limiter := middleware.RateLimiter(60, time.Minute)
+	limiter := middleware.RateLimiter(600, time.Minute)
 	a.POST("/register", limiter, authH.Register)
 	a.POST("/login", limiter, authH.Login)
 	a.POST("/logout", requireAuth, authH.Logout)
@@ -68,7 +68,7 @@ func NewWithDeps(cfg *config.Config, db *gorm.DB, searcher ai.Searcher, llm ai.C
 	p.GET("", postH.MyList)
 	p.POST("", postH.Create)
 	p.GET("/stats", postH.Stats)
-	p.POST("/ai-generate", middleware.RateLimiter(20, time.Minute), aiH.Generate)
+	p.POST("/ai-generate", middleware.RateLimiter(120, time.Minute), aiH.Generate)
 	p.GET("/:id", postH.Get)
 	p.PUT("/:id", postH.Update)
 	p.PATCH("/:id/toggle-publish", postH.TogglePublish)

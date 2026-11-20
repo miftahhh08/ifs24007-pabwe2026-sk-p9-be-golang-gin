@@ -1,6 +1,7 @@
 package database
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -61,4 +62,27 @@ func TestSeedHashError(t *testing.T) {
 	// bcrypt menolak password > 72 byte
 	err = Seed(db, &config.Config{AdminUsername: "x", AdminPassword: strings.Repeat("a", 80)})
 	assert.Error(t, err)
+}
+
+func TestConnectWithFallback(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "t.db")
+
+	// DB_CONNECTION=sqlite langsung memakai SQLite.
+	db, err := ConnectWithFallback(&config.Config{DBConnection: "sqlite", SQLitePath: file})
+	require.NoError(t, err)
+	assert.NotNil(t, db)
+
+	// Postgres tidak tersedia -> fallback ke SQLite.
+	db, err = ConnectWithFallback(&config.Config{DBHost: "127.0.0.1", DBPort: "1", DBUsername: "x", DBPassword: "x", DBDatabase: "x", DBSSLMode: "disable", SQLitePath: file})
+	require.NoError(t, err)
+	require.NoError(t, Migrate(db))
+
+	// Berkas tak bisa dibuka -> memori.
+	db, err = openSQLite("file:/nonexistent-dir-xyz/x.db?mode=ro")
+	require.NoError(t, err)
+	assert.NotNil(t, db)
+
+	// DSN memori juga valid.
+	_, err = openSQLite("file::memory:")
+	require.NoError(t, err)
 }
