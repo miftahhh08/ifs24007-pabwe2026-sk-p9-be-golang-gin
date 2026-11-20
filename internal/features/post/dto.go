@@ -20,9 +20,12 @@ type PostFilter struct {
 
 // Stats adalah ringkasan 3 kartu statistik penulis.
 type Stats struct {
-	Total     int64 `json:"total"`
-	Published int64 `json:"published"`
-	Draft     int64 `json:"draft"`
+	Total        int64 `json:"total"`
+	Published    int64 `json:"published"`
+	Draft        int64 `json:"draft"`
+	TotalArticle int64 `json:"total_articles"`
+	TotalSelesai int64 `json:"total_selesai"`
+	BelumSelesai int64 `json:"belum_selesai"`
 }
 
 // AdminUser adalah ringkasan pengguna untuk panel admin.
@@ -33,5 +36,8 @@ type AdminUser struct {
 	Role           string    `json:"role"`
 	TotalPosts     int64     `json:"total_posts"`
 	TotalPublished int64     `json:"total_published"`
+	TotalArticles  int64     `json:"total_articles"`
+	TotalSelesai   int64     `json:"total_selesai"`
+	BelumSelesai   int64     `json:"belum_selesai"`
 	CreatedAt      time.Time `json:"created_at"`
 }

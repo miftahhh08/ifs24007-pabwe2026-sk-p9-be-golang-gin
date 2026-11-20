@@ -143,6 +143,9 @@ func TestAuthorCRUDFlow(t *testing.T) {
 	assert.EqualValues(t, 2, data(out)["total"])
 	assert.EqualValues(t, 1, data(out)["published"])
 	assert.EqualValues(t, 1, data(out)["draft"])
+	assert.EqualValues(t, 2, data(out)["total_articles"])
+	assert.EqualValues(t, 1, data(out)["total_selesai"])
+	assert.EqualValues(t, 1, data(out)["belum_selesai"])
 
 	// list & get
 	_, out = e.call("GET", "/posts", e.author, nil)

@@ -178,6 +178,7 @@ func (r *gormRepository) AdminUsers() ([]AdminUser, error) {
 		out = append(out, AdminUser{
 			ID: u.ID, Username: u.Username, Email: u.Email, Role: u.Role,
 			TotalPosts: c.Total, TotalPublished: c.Published, CreatedAt: u.CreatedAt,
+			TotalArticles: c.Total, TotalSelesai: c.Published, BelumSelesai: c.Total - c.Published,
 		})
 	}
 	return out, nil

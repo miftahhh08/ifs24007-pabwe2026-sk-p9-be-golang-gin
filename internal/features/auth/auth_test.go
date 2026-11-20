@@ -73,11 +73,14 @@ func newDB(t *testing.T) *gorm.DB {
 func TestRegisterLoginProfileFlow(t *testing.T) {
 	r := newEngine(auth.NewRepository(newDB(t)))
 
-	w, _ := call(r, "POST", "/register", "", gin.H{"username": "budi", "email": "Budi@Mail.com", "password": "rahasia"})
+	w, regOut := call(r, "POST", "/register", "", gin.H{"username": "budi", "email": "Budi@Mail.com", "password": "rahasia"})
 	assert.Equal(t, http.StatusCreated, w.Code)
+	regData := regOut["data"].(map[string]interface{})
+	assert.Len(t, strings.Split(regData["token"].(string), "."), 3)
+	assert.Equal(t, "budi", regData["user"].(map[string]interface{})["username"])
 
 	w, _ = call(r, "POST", "/register", "", gin.H{"username": "budi", "email": "lain@mail.com", "password": "rahasia"})
-	assert.Equal(t, http.StatusConflict, w.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	w, _ = call(r, "POST", "/register", "", "{bad json")
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -124,7 +127,7 @@ func TestUpdateProfileDuplicateAndNotFound(t *testing.T) {
 
 	tok, _ := middleware.NewToken(secret, a.ID, a.Username, a.Role, time.Hour)
 	w, _ := call(r, "PUT", "/profile", tok, gin.H{"username": "bob"})
-	assert.Equal(t, http.StatusConflict, w.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	ghost, _ := middleware.NewToken(secret, 9999, "ghost", "member", time.Hour)
 	w, _ = call(r, "GET", "/profile", ghost, nil)

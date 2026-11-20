@@ -76,6 +76,11 @@ func (s *Service) Login(req LoginRequest) (*AuthResult, error) {
 	if bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(req.Password)) != nil {
 		return nil, ErrInvalidCredentials
 	}
+	return s.IssueToken(u)
+}
+
+// IssueToken menerbitkan token JWT untuk pengguna dan membungkusnya bersama data user.
+func (s *Service) IssueToken(u *User) (*AuthResult, error) {
 	token, err := s.sign(s.secret, u.ID, u.Username, u.Role, s.ttl)
 	if err != nil {
 		return nil, err

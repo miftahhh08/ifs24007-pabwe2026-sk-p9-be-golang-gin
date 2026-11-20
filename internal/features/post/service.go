@@ -233,7 +233,10 @@ func (s *Service) Stats(userID uint) (*Stats, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Stats{Total: total, Published: published, Draft: total - published}, nil
+	return &Stats{
+		Total: total, Published: published, Draft: total - published,
+		TotalArticle: total, TotalSelesai: published, BelumSelesai: total - published,
+	}, nil
 }
 
 // AdminUsers memberi ringkasan seluruh pengguna beserta jumlah artikel.

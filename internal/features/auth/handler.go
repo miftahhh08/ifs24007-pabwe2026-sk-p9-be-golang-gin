@@ -25,11 +25,16 @@ func (h *Handler) Register(c *gin.Context) {
 	u, err := h.svc.Register(req)
 	switch {
 	case errors.Is(err, ErrDuplicate):
-		response.Fail(c, http.StatusConflict, err.Error())
+		response.Fail(c, http.StatusBadRequest, err.Error())
 	case err != nil:
 		response.Error(c, "Failed to register user")
 	default:
-		response.Success(c, http.StatusCreated, "Registration successful", u)
+		res, terr := h.svc.IssueToken(u)
+		if terr != nil {
+			response.Error(c, "Failed to register user")
+			return
+		}
+		response.Success(c, http.StatusCreated, "Registration successful", res)
 	}
 }
 
@@ -78,7 +83,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	case errors.Is(err, ErrNotFound):
 		response.Fail(c, http.StatusNotFound, err.Error())
 	case errors.Is(err, ErrDuplicate):
-		response.Fail(c, http.StatusConflict, err.Error())
+		response.Fail(c, http.StatusBadRequest, err.Error())
 	case err != nil:
 		response.Error(c, "Failed to update profile")
 	default:
