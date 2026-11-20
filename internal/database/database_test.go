@@ -71,20 +71,32 @@ func TestConnectWithFallback(t *testing.T) {
 	db, err := ConnectWithFallback(&config.Config{DBConnection: "sqlite", SQLitePath: file})
 	require.NoError(t, err)
 	assert.NotNil(t, db)
+	if sdb, err := db.DB(); err == nil {
+		defer sdb.Close()
+	}
 
 	// Postgres tidak tersedia -> fallback ke SQLite.
-	db, err = ConnectWithFallback(&config.Config{DBHost: "127.0.0.1", DBPort: "1", DBUsername: "x", DBPassword: "x", DBDatabase: "x", DBSSLMode: "disable", SQLitePath: file})
+	db2, err := ConnectWithFallback(&config.Config{DBHost: "127.0.0.1", DBPort: "1", DBUsername: "x", DBPassword: "x", DBDatabase: "x", DBSSLMode: "disable", SQLitePath: file})
 	require.NoError(t, err)
-	require.NoError(t, Migrate(db))
+	require.NoError(t, Migrate(db2))
+	if sdb, err := db2.DB(); err == nil {
+		defer sdb.Close()
+	}
 
 	// Berkas tak bisa dibuka -> memori.
-	db, err = openSQLite("file:/nonexistent-dir-xyz/x.db?mode=ro")
+	db3, err := openSQLite("file:/nonexistent-dir-xyz/x.db?mode=ro")
 	require.NoError(t, err)
-	assert.NotNil(t, db)
+	assert.NotNil(t, db3)
+	if sdb, err := db3.DB(); err == nil {
+		defer sdb.Close()
+	}
 
 	// DSN memori juga valid.
-	_, err = openSQLite("file::memory:")
+	db4, err := openSQLite("file::memory:")
 	require.NoError(t, err)
+	if sdb, err := db4.DB(); err == nil {
+		defer sdb.Close()
+	}
 }
 
 func TestSeedPromotesAndResetsExistingAdmin(t *testing.T) {
