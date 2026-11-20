@@ -34,6 +34,7 @@ type Post struct {
 
 	ReadingTime int         `gorm:"-" json:"reading_time"`
 	Author      *AuthorInfo `gorm:"-" json:"author,omitempty"`
+	AuthorName  string      `gorm:"-" json:"author_name"`
 }
 
 // Fill mengisi field turunan (reading time & author).
@@ -41,6 +42,7 @@ func (p *Post) Fill() {
 	p.ReadingTime = ReadingTime(p.Content)
 	if p.User.ID != 0 {
 		p.Author = &AuthorInfo{ID: p.User.ID, Username: p.User.Username}
+		p.AuthorName = p.User.Username
 	}
 }
 
