@@ -16,7 +16,7 @@ cp .env.example .env
 go mod tidy
 
 # 4. Jalankan
-go run cmd/server/main.go
+go run .
 ```
 
 Swagger UI: http://localhost:8081/swagger/index.html — OpenAPI JSON: http://localhost:8081/api.json
@@ -33,8 +33,8 @@ go test -v -cover ./internal/...
 ## Build binary
 
 ```bash
-go build -o server.exe cmd/server/main.go   # Windows
-go build -o server cmd/server/main.go       # Linux/macOS
+go build -o server.exe .   # Windows
+go build -o server .       # Linux/macOS
 ```
 Berkas `.env` harus berada di samping binary.
 

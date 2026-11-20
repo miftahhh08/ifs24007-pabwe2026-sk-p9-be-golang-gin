@@ -13,3 +13,5 @@
 coverage.*
 .idea/
 .vscode/
+/cover
+/cover.out
