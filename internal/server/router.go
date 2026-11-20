@@ -59,7 +59,7 @@ func NewWithDeps(cfg *config.Config, db *gorm.DB, searcher ai.Searcher, llm ai.C
 	limiter := middleware.RateLimiter(600, time.Minute)
 	a.POST("/register", limiter, authH.Register)
 	a.POST("/login", limiter, authH.Login)
-	a.POST("/logout", requireAuth, authH.Logout)
+	a.POST("/logout", authH.Logout)
 	a.GET("/profile", requireAuth, authH.GetProfile)
 	a.PUT("/profile", requireAuth, authH.UpdateProfile)
 

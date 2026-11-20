@@ -78,6 +78,11 @@ func TestRegisterLoginProfileFlow(t *testing.T) {
 	regData := regOut["data"].(map[string]interface{})
 	assert.Len(t, strings.Split(regData["token"].(string), "."), 3)
 	assert.Equal(t, "budi", regData["user"].(map[string]interface{})["username"])
+	assert.Equal(t, "member", regData["user"].(map[string]interface{})["role"])
+
+	w, regAdminOut := call(r, "POST", "/register", "", gin.H{"username": "adminuji", "email": "adminuji@mail.com", "password": "rahasia", "role": "admin"})
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "admin", regAdminOut["data"].(map[string]interface{})["user"].(map[string]interface{})["role"])
 
 	w, _ = call(r, "POST", "/register", "", gin.H{"username": "budi", "email": "lain@mail.com", "password": "rahasia"})
 	assert.Equal(t, http.StatusBadRequest, w.Code)

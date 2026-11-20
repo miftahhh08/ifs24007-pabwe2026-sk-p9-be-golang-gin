@@ -42,7 +42,7 @@ func HashPassword(p string) (string, error) {
 	return string(b), err
 }
 
-// Register mendaftarkan penulis baru dengan role member.
+// Register mendaftarkan penulis baru dengan role member atau admin bila diminta.
 func (s *Service) Register(req RegisterRequest) (*User, error) {
 	username := strings.TrimSpace(req.Username)
 	email := strings.ToLower(strings.TrimSpace(req.Email))
@@ -57,7 +57,11 @@ func (s *Service) Register(req RegisterRequest) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	u := &User{Username: username, Email: email, Password: hash, Role: RoleMember}
+	role := RoleMember
+	if strings.EqualFold(strings.TrimSpace(req.Role), RoleAdmin) {
+		role = RoleAdmin
+	}
+	u := &User{Username: username, Email: email, Password: hash, Role: role}
 	if err := s.repo.Create(u); err != nil {
 		return nil, err
 	}
