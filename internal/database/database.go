@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/glebarez/sqlite"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -76,26 +77,39 @@ func Migrate(db *gorm.DB) error {
 	return db.AutoMigrate(&auth.User{}, &post.Post{})
 }
 
-// Seed membuat akun admin dari ADMIN_USERNAME / ADMIN_PASSWORD bila belum ada.
+// Seed memastikan akun admin dari ADMIN_USERNAME / ADMIN_PASSWORD selalu ada,
+// berperan admin, dan kata sandinya sesuai konfigurasi (idempoten).
 func Seed(db *gorm.DB, cfg *config.Config) error {
-	var n int64
-	if err := db.Model(&auth.User{}).Where("username = ?", cfg.AdminUsername).Count(&n).Error; err != nil {
-		return err
-	}
-	if n > 0 {
-		// Akun dengan username admin yang sudah ada dipastikan berperan admin.
-		return db.Model(&auth.User{}).
-			Where("username = ? AND role <> ?", cfg.AdminUsername, auth.RoleAdmin).
-			Update("role", auth.RoleAdmin).Error
-	}
-	hash, err := auth.HashPassword(cfg.AdminPassword)
+	var admin auth.User
+	err := db.Where("username = ?", cfg.AdminUsername).Limit(1).Find(&admin).Error
 	if err != nil {
 		return err
 	}
-	return db.Create(&auth.User{
-		Username: cfg.AdminUsername,
-		Email:    cfg.AdminUsername + "@delcom.org",
-		Password: hash,
-		Role:     auth.RoleAdmin,
-	}).Error
+	if admin.ID == 0 {
+		hash, err := auth.HashPassword(cfg.AdminPassword)
+		if err != nil {
+			return err
+		}
+		return db.Create(&auth.User{
+			Username: cfg.AdminUsername,
+			Email:    cfg.AdminUsername + "@delcom.org",
+			Password: hash,
+			Role:     auth.RoleAdmin,
+		}).Error
+	}
+	updates := map[string]interface{}{}
+	if admin.Role != auth.RoleAdmin {
+		updates["role"] = auth.RoleAdmin
+	}
+	if bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(cfg.AdminPassword)) != nil {
+		hash, err := auth.HashPassword(cfg.AdminPassword)
+		if err != nil {
+			return err
+		}
+		updates["password"] = hash
+	}
+	if len(updates) == 0 {
+		return nil
+	}
+	return db.Model(&auth.User{}).Where("id = ?", admin.ID).Updates(updates).Error
 }

@@ -86,3 +86,18 @@ func TestConnectWithFallback(t *testing.T) {
 	_, err = openSQLite("file::memory:")
 	require.NoError(t, err)
 }
+
+func TestSeedPromotesAndResetsExistingAdmin(t *testing.T) {
+	db, err := NewTestDB()
+	require.NoError(t, err)
+	old, err := auth.HashPassword("passwordlama")
+	require.NoError(t, err)
+	require.NoError(t, db.Create(&auth.User{Username: "admin", Email: "a@x.com", Password: old, Role: auth.RoleMember}).Error)
+
+	require.NoError(t, Seed(db, &config.Config{AdminUsername: "admin", AdminPassword: "admin"}))
+
+	var u auth.User
+	require.NoError(t, db.Where("username = ?", "admin").First(&u).Error)
+	assert.Equal(t, auth.RoleAdmin, u.Role)
+	assert.NotEqual(t, old, u.Password)
+}
