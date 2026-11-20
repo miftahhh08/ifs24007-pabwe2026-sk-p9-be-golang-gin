@@ -1,0 +1,15 @@
+# Biner (diawali slash agar hanya root, bukan folder internal/server/)
+/server
+/main
+/app
+/server.exe
+*.exe
+
+# Environment
+.env
+
+# Coverage & IDE
+*.out
+coverage.*
+.idea/
+.vscode/
