@@ -27,6 +27,7 @@ type PublicPost struct {
 	UpdatedAt      time.Time   `json:"updated_at"`
 	ReadingTime    int         `json:"reading_time"`
 	Author         *AuthorInfo `json:"author,omitempty"`
+	AuthorName     string      `json:"author_name"`
 }
 
 // ToPublic mengubah Post menjadi PublicPost.
@@ -36,7 +37,7 @@ func ToPublic(p *Post) PublicPost {
 		Excerpt: p.Excerpt, Content: p.Content, CoverImagePath: p.CoverImagePath,
 		IsPublished: p.IsPublished, PublishedAt: p.PublishedAt,
 		CreatedAt: p.CreatedAt, UpdatedAt: p.UpdatedAt,
-		ReadingTime: p.ReadingTime, Author: p.Author,
+		ReadingTime: p.ReadingTime, Author: p.Author, AuthorName: p.AuthorName,
 	}
 }
 
